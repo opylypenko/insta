@@ -12,7 +12,7 @@ struct StoriesView: View {
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
+            LazyHStack(alignment: .top) {
                 ForEach(viewModel.stories) { story in
                     VStack {
                         AsyncImage(url: story.image) { image in
@@ -39,13 +39,11 @@ struct StoriesView: View {
                     }
                     .onAppear {
                         if shouldLoadNextPage(story: story) {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                viewModel.loadNextPage()
-                            }
+                            viewModel.loadNextPage()
                         }
                     }
                 }
-                
+
                 if viewModel.isFetching {
                     ProgressView()
                         .frame(width: 70, height: 70)
@@ -57,12 +55,9 @@ struct StoriesView: View {
             StoryDetailView(story: selectedStory, mainViewModel: viewModel)
         }
     }
-    
+
     private func shouldLoadNextPage(story: StoryModel) -> Bool {
         guard let lastStory = viewModel.stories.last else { return false }
-        let screenWidth = UIScreen.main.bounds.width
-        let storyPosition = UIScreen.main.bounds.width - 100 
-        return story.id == lastStory.id && !viewModel.isFetching && storyPosition < screenWidth
+        return story.id == lastStory.id && !viewModel.isFetching
     }
 }
-
