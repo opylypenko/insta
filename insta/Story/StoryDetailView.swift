@@ -19,19 +19,19 @@ struct StoryDetailView: View {
 
     var body: some View {
         ZStack {
-            Color.black.edgesIgnoringSafeArea(.all)
-
             if let nextStoryId = viewModel.nextStoryId {
                 CachedStoryImageView(storyId: nextStoryId)
                     .id(nextStoryId)
                     .offset(x: UIScreen.main.bounds.width + dragOffset)
             } else if viewModel.isLoadingNextPage {
-                ProgressView()
-                    .scaleEffect(2)
-                    .frame(width: 100, height: 100)
-                    .background(Color.white.opacity(0.3))
-                    .clipShape(Circle())
-                    .offset(x: UIScreen.main.bounds.width + dragOffset)
+                HStack {
+                    ProgressView()
+                        .scaleEffect(2)
+                        .frame(width: 100, height: 100)
+                        .clipShape(Circle())
+                        .offset(x: UIScreen.main.bounds.width + dragOffset)
+                    Spacer()
+                }
             }
             
             if let prevStoryId = viewModel.prevStoryId {
@@ -51,8 +51,13 @@ struct StoryDetailView: View {
                         .onEnded { value in
                             withAnimation(.easeOut(duration: 0.3)) {
                                 if value.translation.width < -100 {
-                                    dragOffset = -UIScreen.main.bounds.width
-                                    viewModel.nextStory()
+                                    if viewModel.nextStoryId != nil {
+                                        dragOffset = -UIScreen.main.bounds.width
+                                        viewModel.nextStory()
+                                    } else {
+                                        dragOffset = -UIScreen.main.bounds.width / 4
+                                        viewModel.loadNextPage()
+                                    }
                                 } else if value.translation.width > 100 {
                                     if viewModel.prevStoryId != nil {
                                         dragOffset = UIScreen.main.bounds.width

@@ -58,13 +58,7 @@ class StoryDetailViewModel: ObservableObject {
             let allStories = self.storyStorage.allStories()
             
             let nextIndex = allStories.firstIndex(where: { $0.id == nextId }) ?? 0
-            
-            if nextIndex < allStories.count - 1 {
-                self.nextStoryId =  allStories[nextIndex + 1].id
-            } else {
-                self.nextStoryId = nil
-                self.loadNextPage()
-            }
+            self.nextStoryId = nextIndex < allStories.count - 1 ? allStories[nextIndex + 1].id : nil
 
             self.markAsViewed()
             self.isTransitioning = false
@@ -102,7 +96,7 @@ class StoryDetailViewModel: ObservableObject {
             if currentId + 1 < allStories.count - 1 {
                 self.prevStoryId = currentStoryId
                 self.currentStoryId = allStories[currentId + 1].id
-                
+                markAsViewed()
                 if currentId + 2 < allStories.count - 1 {
                     self.nextStoryId = allStories[currentId + 2].id
                 }
