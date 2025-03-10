@@ -9,9 +9,11 @@ import SwiftUI
 
 struct StoriesView: View {
     @ObservedObject var viewModel: StoryViewModel
-
-    init(storyStorage: StoryStorage) {
-        self.viewModel = StoryViewModel(storyStorage: storyStorage)
+    private weak var composer: StoryComposer?
+    
+    init(composer: StoryComposer, viewModel: StoryViewModel) {
+        self.composer = composer
+        self.viewModel = viewModel
     }
 
     var body: some View {
@@ -55,14 +57,7 @@ struct StoriesView: View {
             .padding(.top, 10)
         }
         .fullScreenCover(item: $viewModel.selectedStory) { selectedStory in
-            if let detailViewModel = StoryDetailViewModel(
-                storyId: selectedStory.id,
-                storyStorage: viewModel.storyStorage
-            ) {
-                StoryDetailView(viewModel: detailViewModel)
-            } else {
-                Text("Error: Story not found").foregroundColor(.red)
-            }
+            composer?.composeStoryDetailView(for: selectedStory.id)
         }
     }
 

@@ -9,9 +9,11 @@ import SwiftUI
 
 @main
 struct instaApp: App {
+    private let storyComposer = StoryComposer()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            storyComposer.composeMainView()
         }
     }
 }
