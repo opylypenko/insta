@@ -7,10 +7,10 @@
 
 import Foundation
 
-struct StoryModel: Identifiable, Equatable {
+struct StoryModel: Identifiable {
     let id: UUID
     let name: String
-    let image: URL
+    let userAvatar: URL
     var isViewed: Bool = false
     var isLiked: Bool = false
 }

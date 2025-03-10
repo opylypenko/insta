@@ -11,6 +11,8 @@ struct StoryDetailView: View {
     @ObservedObject var viewModel: StoryDetailViewModel
     @Environment(\.presentationMode) var presentationMode
 
+    @State private var dragOffset: CGFloat = 0
+
     init(viewModel: StoryDetailViewModel) {
         self.viewModel = viewModel
     }
@@ -18,51 +20,63 @@ struct StoryDetailView: View {
     var body: some View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
-            
-            AsyncImage(url: viewModel.randomImageURL) { image in
-                image.resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } placeholder: {
-                ProgressView()
+
+            if let nextStoryId = viewModel.nextStoryId {
+                CachedStoryImageView(storyId: nextStoryId)
+                    .id(nextStoryId)
+                    .offset(x: UIScreen.main.bounds.width + dragOffset)
             }
             
-            VStack {
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .resizable()
-                            .frame(width: 30, height: 30)
-                            .foregroundColor(.white)
-                            .background(Color.black.opacity(0.5))
-                            .clipShape(Circle())
-                            .padding()
+            if let prevStoryId = viewModel.prevStoryId {
+                CachedStoryImageView(storyId: prevStoryId)
+                    .id(prevStoryId)
+                    .offset(x: -UIScreen.main.bounds.width + dragOffset)
+            }
+            
+            CachedStoryImageView(storyId: viewModel.currentStoryId)
+                .id(viewModel.currentStoryId)
+                .offset(x: dragOffset)
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            dragOffset = value.translation.width
+                        }
+                        .onEnded { value in
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                if value.translation.width < -100 {
+                                    withAnimation(.easeOut(duration: 0.3)) {
+                                        dragOffset = -UIScreen.main.bounds.width
+                                    }
+                                    viewModel.nextStory()
+                                } else if value.translation.width > 100 {
+                                    withAnimation(.easeOut(duration: 0.3)) {
+                                        dragOffset = UIScreen.main.bounds.width
+                                    }
+                                    viewModel.previousStory()
+                                } else {
+                                    dragOffset = 0
+                                }
+                            }
+                        }
+                )
+                .onChange(of: viewModel.isTransitioning) {
+                    if !viewModel.isTransitioning {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            dragOffset = 0
+                        }
                     }
-                    .padding(.top, 50)
-                    .padding(.trailing, 20)
+                }
+            
+            VStack {
+                CloseButtonView {
+                    presentationMode.wrappedValue.dismiss()
                 }
 
                 Spacer()
 
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        viewModel.toggleLike()
-                    }) {
-                        Image(systemName: viewModel.story.isLiked ? "heart.fill" : "heart")
-                            .resizable()
-                            .frame(width: 40, height: 40)
-                            .foregroundColor(.red)
-                            .padding(15)
-                            .clipShape(Circle())
-                    }
-                    .padding(.bottom, 30)
-                    .padding(.trailing, 20)
+                LikeButtonView(isLiked: viewModel.isLiked) {
+                    viewModel.toggleLike()
                 }
-                .frame(maxWidth: .infinity)
             }
         }
     }

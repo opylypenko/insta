@@ -30,7 +30,7 @@ class StoryViewModel: ObservableObject {
                 switch result {
                 case .success(let stories):
                     let newStories = stories.map { networkStory in
-                        StoryModel(id: UUID(), name: networkStory.username, image: networkStory.profilePictureUrl)
+                        StoryModel(id: UUID(), name: networkStory.username, userAvatar: networkStory.profilePictureUrl)
                     }
                     self?.storyStorage.addStories(newStories)
                     self?.stories = self?.storyStorage.allStories() ?? []
