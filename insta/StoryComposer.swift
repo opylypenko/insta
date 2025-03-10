@@ -11,7 +11,8 @@ class StoryComposer {
     private let storyStorage: StoryStorage
 
     init() {
-        self.storyStorage = StoryStorage()
+        let storyService = MockStoryService()
+        self.storyStorage = StoryStorage(storyService: storyService)
     }
 
     func composeMainView() -> some View {

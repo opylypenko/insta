@@ -12,11 +12,9 @@ class StoryViewModel: ObservableObject {
     @Published var isFetching: Bool = false
     @Published var selectedStory: StoryModel? = nil
 
-    private let storyService: StoryServiceProtocol
     let storyStorage: StoryStorage
 
-    init(storyService: StoryServiceProtocol = MockStoryService(), storyStorage: StoryStorage) {
-        self.storyService = storyService
+    init(storyStorage: StoryStorage) {
         self.storyStorage = storyStorage
         loadNextPage()
     }
@@ -25,21 +23,10 @@ class StoryViewModel: ObservableObject {
         guard !isFetching else { return }
         isFetching = true
 
-        storyService.fetchStories { [weak self] result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let stories):
-                    let newStories = stories.map { networkStory in
-                        StoryModel(id: UUID(), name: networkStory.username, image: networkStory.profilePictureUrl)
-                    }
-                    self?.storyStorage.addStories(newStories)
-                    self?.stories = self?.storyStorage.allStories() ?? []
-                    self?.isFetching = false
-                case .failure(let error):
-                    self?.isFetching = false
-                    print("Failed to fetch stories: \(error)")
-                }
-            }
+        storyStorage.loadNextPage { [weak self] in
+            guard let self else { return }
+            self.isFetching = false
+            self.stories = self.storyStorage.allStories()
         }
     }
 
@@ -51,5 +38,13 @@ class StoryViewModel: ObservableObject {
     func markStoryAsViewed(_ story: StoryModel) {
         storyStorage.markStoryAsViewed(story.id)
         stories = storyStorage.allStories()
+    }
+    
+    func refreshStories() {
+        stories = storyStorage.allStories()
+        for index in stories.indices {
+            stories[index].isViewed = storyStorage.getStory(by: stories[index].id)?.isViewed ?? false
+        }
+        objectWillChange.send()
     }
 }

@@ -8,8 +8,14 @@
 import Foundation
 
 class StoryStorage {
+    private let storyService: StoryServiceProtocol
     private var stories: [StoryModel] = []
-
+    
+    init(storyService: StoryServiceProtocol) {
+        self.storyService = storyService
+    }
+    
+    
     func getStory(by id: UUID) -> StoryModel? {
         return stories.first(where: { $0.id == id })
     }
@@ -26,11 +32,33 @@ class StoryStorage {
         }
     }
 
-    func addStories(_ newStories: [StoryModel]) {
-        stories.append(contentsOf: newStories)
-    }
-
     func allStories() -> [StoryModel] {
         return stories
+    }
+    
+    func loadNextPage(competion: @escaping () -> Void) {
+        fetchStories(competion: competion)
+    }
+    
+    private func fetchStories(competion: @escaping () -> Void) {
+        storyService.fetchStories { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let stories):
+                    let newStories = stories.map { networkStory in
+                        StoryModel(
+                            id: UUID(),
+                            name: networkStory.username,
+                            userAvatar: networkStory.profilePictureUrl
+                        )
+                    }
+                    self?.stories.append(contentsOf: newStories)
+                    competion()
+                case .failure(let error):
+                    competion()
+                    print("Failed to fetch stories: \(error)")
+                }
+            }
+        }
     }
 }

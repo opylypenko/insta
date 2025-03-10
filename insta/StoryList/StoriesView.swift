@@ -21,7 +21,7 @@ struct StoriesView: View {
             LazyHStack(alignment: .top) {
                 ForEach(viewModel.stories) { story in
                     VStack {
-                        AsyncImage(url: story.image) { image in
+                        AsyncImage(url: story.userAvatar) { image in
                             image.resizable()
                         } placeholder: {
                             ProgressView()
@@ -56,8 +56,15 @@ struct StoriesView: View {
             }
             .padding(.top, 10)
         }
-        .fullScreenCover(item: $viewModel.selectedStory) { selectedStory in
-            composer?.composeStoryDetailView(for: selectedStory.id)
+        .fullScreenCover(
+            item: $viewModel.selectedStory,
+            onDismiss: { viewModel.refreshStories() }
+        ) { selectedStory in
+            if let detailView = composer?.composeStoryDetailView(for: selectedStory.id) {
+                    detailView
+                } else {
+                    Text("Error: Story not found").foregroundColor(.red)
+                }
         }
     }
 
