@@ -8,8 +8,12 @@
 import SwiftUI
 
 struct StoriesView: View {
-    @ObservedObject var viewModel = StoryViewModel()
-    
+    @ObservedObject var viewModel: StoryViewModel
+
+    init(storyStorage: StoryStorage) {
+        self.viewModel = StoryViewModel(storyStorage: storyStorage)
+    }
+
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(alignment: .top) {
@@ -28,8 +32,7 @@ struct StoriesView: View {
                                 .stroke(story.isViewed ? Color.gray : Color.red, lineWidth: 3)
                         )
                         .onTapGesture {
-                            viewModel.markStoryAsViewed(story)
-                            viewModel.selectedStory = story
+                            viewModel.selectStory(story)
                         }
                         Text(story.name)
                             .font(.caption)
@@ -49,10 +52,17 @@ struct StoriesView: View {
                         .frame(width: 70, height: 70)
                 }
             }
-            .padding()
+            .padding(.top, 10)
         }
         .fullScreenCover(item: $viewModel.selectedStory) { selectedStory in
-            StoryDetailView(story: selectedStory, mainViewModel: viewModel)
+            if let detailViewModel = StoryDetailViewModel(
+                storyId: selectedStory.id,
+                storyStorage: viewModel.storyStorage
+            ) {
+                StoryDetailView(viewModel: detailViewModel)
+            } else {
+                Text("Error: Story not found").foregroundColor(.red)
+            }
         }
     }
 
@@ -61,3 +71,4 @@ struct StoriesView: View {
         return story.id == lastStory.id && !viewModel.isFetching
     }
 }
+
